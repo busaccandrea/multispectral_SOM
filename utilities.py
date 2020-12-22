@@ -1,6 +1,8 @@
 import scipy.io as scio
 import numpy as np
 import os
+from PIL import Image
+
 
 
 def get_matrix_from_matfile(matfile, key_dict=''):
@@ -32,3 +34,14 @@ def get_coord_from_pixel(pixel:int):
     row = int(pixel/418)
     col = pixel % 418
     return row, col
+
+def save_clusters_images(clusters, base_filename='c'):
+    """
+    Given the matrix of clusters, save an image (png) for every cluster.
+    The input is a matrix with shape (#pixels, #cluster).
+    """
+    for k in range(0, clusters.shape[1]):# 0->25
+            img_k = clusters[:,k]
+            img_k = img_k.reshape(418, 418)
+            image = Image.fromarray(img_k)
+            image.save(base_filename + str(k) + '.png')
