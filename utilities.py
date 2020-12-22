@@ -24,3 +24,11 @@ def get_matrix_from_matfile(matfile, key_dict=''):
     else: # must return a dict
         return mat_file
 
+def get_coord_from_pixel(pixel:int):
+    """
+    Cast the pixel into two coords (i,j).
+    Use this method to transform the row from the matrix of spectra (e.g. 125000 x 2048) to (i,j) coordinates, with i,j = 0,1,...,417.
+    """
+    row = int(pixel/418)
+    col = pixel % 418
+    return row, col
