@@ -4,27 +4,29 @@ from scipy import sparse
 import scipy.signal as sci_sig
 import matplotlib.pyplot as plt
 
-def max_spectra(spectra, write_in_file = False):
+def max_spectra(spectra_matrix, write_in_file = False):
     """
-    Compute the max spectra of input spectra.
+    Compute the max spectra of input.
     If you want to save in a file
+    Input is the matrix of spectra.
     """
     max_spectra = np.zeros(2048)
     for col in range(0, 2048):
-        max_spectra[col] = np.max(B_[:,col])
+        max_spectra[col] = np.max(spectra_matrix[:,col])
     
     if write_in_file:
         np.save('max_spectra.npy', max_spectra)
     
     return max_spectra
 
-def sum_spectra(spectra, write_in_file=False):
+def sum_spectra(spectra_matrix, write_in_file=False):
     """
     Compute the sum spectra of input.
+    Input is the matrix of spectra.
     """
     sum_spectra = np.zeros(2048)
     for col in range(0, 2048):
-        sum_spectra[col] = np.sum(B_[:,col])
+        sum_spectra[col] = np.sum(spectra_matrix[:,col])
 
     if write_in_file:
         np.save('sum_spectra.npy', sum_spectra)
@@ -42,27 +44,14 @@ def find_peaks_(spectra, threshold=[3, None], width=3):
     output = np.zeros(len(spectra))
     for i in peaks[0]:
         output[i] = spectra[i]
-    plt.plot(sum_spectra, 'b', output, 'r')
+    plt.plot(spectra, 'b', output, 'r')
     plt.show()
 
+    return output
+
 # # per caricare un file .mat usare la libreria di scipy.io
-mat_file = scio.loadmat('./B.mat')
-B_ = mat_file["B"]
-B = np.zeros(B_.shape)
-
-
-
-# determino lo spettro somma da file
-
-
-
-
-# plt.plot(max_spectra)
-# plt.show()
-
-spectra = sum_spectra
-# avg = np.average(sum_spectra)
-
+# mat_file = scio.loadmat('./B.mat')
+# B_ = mat_file["B"]
 
 
 
