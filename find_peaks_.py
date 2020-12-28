@@ -38,7 +38,7 @@ def find_peaks_(spectra, threshold=[3, None], width=3):
     Find peaks in spectra given a threshold and a width.
     """
     # peaks is a ndarray of indices of peaks in spectra
-    peaks = sci_sig.find_peaks(spectra, threshold=[3, None], width=3)
+    peaks = sci_sig.find_peaks(spectra, threshold=[3, None], width=3, distance=None)
 
     # obtain a ndarray of peaks.
     output = np.zeros(len(spectra))
