@@ -5,6 +5,10 @@ __pycache__/
 
 # My files
 ./EDF
+./results
+*.npy
+*.PNG
+*.npz
 
 # C extensions
 *.so
