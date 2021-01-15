@@ -33,21 +33,25 @@ def sum_spectra(spectra_matrix, write_in_file=False):
     
     return sum_spectra
 
-def find_peaks_(spectra, threshold=[3, None], width=3):
+def find_and_plot_peaks(spectra, threshold=[3, None], width=3):
     """
     Find peaks in spectra given a threshold and a width.
     """
     # peaks is a ndarray of indices of peaks in spectra
-    peaks = sci_sig.find_peaks(spectra, threshold=[3, None], width=3, distance=None)
-
+    peaks = sci_sig.find_peaks(spectra, threshold= threshold, width=width, distance=None)
+    print('# of peaks found:', len(peaks[0]))
     # obtain a ndarray of peaks.
     output = np.zeros(len(spectra))
+    count = 0
     for i in peaks[0]:
-        output[i] = spectra[i]
-    plt.plot(spectra, 'b', output, 'r')
+        if i > 212 and i < 1300:
+            output[i] = spectra[i]
+            count += 1
+    print('# of peaks plotted = ', count)
+    plt.plot(spectra, 'bo', output, 'r', markersize=2)
     plt.show()
 
-    return output
+    return peaks, output
 
 # # per caricare un file .mat usare la libreria di scipy.io
 # mat_file = scio.loadmat('./B.mat')
