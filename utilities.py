@@ -4,7 +4,34 @@ import os
 from PIL import Image
 
 
+def chem_el_tiff_to_array(imgfile):
+    """
+    read a chemical-element tiff img and returns a col-array
+    """
+    imgfile = Image.open(imgfile)
+    img_array = np.array(imgfile)
+    col_array = img_array.reshape([418*418])
+    # transpose is uset to get a column vector
+    return col_array.T
 
+
+def get_matrix_from_chem_el_tiff(path_folder, save_to_file=True):
+    """
+    reads only the .tiff the path and builds a matrix [418*418, N], where N is the number of chem-elem-tiffs
+    """
+    listfiles = os.listdir(path_folder)
+    M = np.zeros([418*418, len(listfiles)])
+    for i, f in enumerate(listfiles):
+        col_array = chem_el_tiff_to_array(path_folder + f)
+        idx = int(f[0]) - 1
+        M[:, idx] = col_array
+
+    if save_to_file:
+        np.save('M_from_chem_el_tiffs', M)
+    
+    return M
+
+    
 def get_matrix_from_matfile(matfile, key_dict=''):
     """
     This method is made to get a matrix in a .mat file.
@@ -26,6 +53,7 @@ def get_matrix_from_matfile(matfile, key_dict=''):
     else: # must return a dict
         return mat_file
 
+
 def get_coord_from_pixel(pixel:int):
     """
     Cast the pixel into two coords (i,j).
@@ -35,13 +63,16 @@ def get_coord_from_pixel(pixel:int):
     col = pixel % 418
     return row, col
 
+
 def save_clusters_images(clusters, base_filename='c'):
     """
     Given the matrix of clusters, save an image (png) for every cluster.
     The input is a matrix with shape (#pixels, #cluster).
     """
-    for k in range(0, clusters.shape[1]):# 0->25
-            img_k = clusters[:,k]
-            img_k = img_k.reshape(418, 418)
-            image = Image.fromarray(img_k)
-            image.save(base_filename + str(k) + '.png')
+    folder = './results/'
+    for k in range(0, clusters.shape[1]):# 0-> #clusters
+        img_k = clusters[:,k]
+        img_k = img_k.reshape(418, 418)
+        image = Image.fromarray(img_k)
+        # image.show()
+        image.save(folder + base_filename + str(k) + '.PNG')
