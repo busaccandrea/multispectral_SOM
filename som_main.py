@@ -46,7 +46,7 @@ if __name__ == '__main__':
         #         # print('idx=', idx)
         #         row_winner, col_winner = nn.winner(row) # <--- get class and class coordinates ----------.
         #         cluster = map_width * row_winner + col_winner   # <--------------------------------------'
-        #         # csvwriter.writerow([idx, cluster])
+        #         csvwriter.writerow([idx, cluster])
 
         #         # debugging
         #         # print('cluster = ', cluster)
@@ -58,7 +58,7 @@ if __name__ == '__main__':
             row_winner, col_winner = nn.winner(row) # <--- get class and class coordinates ----------.
             cluster = map_width * row_winner + col_winner   # <--------------------------------------'
 
-            clusters[idx][cluster-1] = 255  # cluster - 1 for 1-indexing dataset-label
+            clusters[idx][cluster-1] = 1  # cluster - 1 for 1-indexing dataset-label
 
 
         np.save('clusters_' + reduction_method + '_' + str(map_height) + 'x' + str(map_width)  +'.npy', clusters)
