@@ -34,7 +34,7 @@ if __name__ == '__main__':
         data = np.load(datafilename)
 
         # initialize cluster matrix (shape: [#pixel, #cluster])
-        clusters = np.zeros([data.shape[0], map_height*map_width], dtype=np.uint8)
+        clusters = np.zeros([data.shape[0], map_height*map_width], dtype=bool)
         # train SOM. epochs = 0 means all dataset
         nn.fit(data=data, epochs=0, decay='hill')
 
