@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.decomposition import NMF
 
+results_base_folder = './results/'
 def peak_based_red(data, write_to_file=False):
     """
     Reduce dimensionality of data based on peaks found.
@@ -33,7 +34,7 @@ def pca_based(data, n_components_=15, write_to_file=False):
     pca_ratio = pca.explained_variance_ratio_
 
     if write_to_file:
-        np.save('data_pca_' + str(n_components_) + '_comp.npy', data)
+        np.save(results_base_folder + 'pca/data_pca_' + str(n_components_) + '_comp.npy', data)
     
 
     return [data_, pca_explained_variance, pca_components, pca_ratio]
@@ -54,7 +55,7 @@ def nnmf_based(data, smoothing=0, n_components_=15, write_to_file=False, max_ite
     W = nmf.fit_transform(data_)
     H = nmf.components_
     if write_to_file:
-        np.save('data_nmf_W_' + str(n_components_) + '_comp_smth_' + str(smoothing) + '.npy', W)
-        np.save('data_nmf_H_' + str(n_components_) + '_comp_smth_' + str(smoothing) + '.npy', H)
+        np.save(results_base_folder + 'nmf/data_nmf_W_' + str(n_components_) + '_comp_smth_' + str(smoothing) + '.npy', W)
+        np.save(results_base_folder + 'nmf/data_nmf_H_' + str(n_components_) + '_comp_smth_' + str(smoothing) + '.npy', H)
     
     return [W,H]
