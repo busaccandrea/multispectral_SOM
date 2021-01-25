@@ -69,10 +69,9 @@ def save_clusters_images(clusters, base_filename='c'):
     Given the matrix of clusters, save an image (png) for every cluster.
     The input is a matrix with shape (#pixels, #cluster).
     """
-    folder = './results/'
+    results_folder = './results/'
     for k in range(0, clusters.shape[1]):# 0-> #clusters
         img_k = clusters[:,k]
-        img_k = img_k.reshape(418, 418)
+        img_k = img_k.reshape(418, 418, order = 'F') # parameter 'F' is used to make the right position of image. (MATLAB reads arrays with a different order)
         image = Image.fromarray(img_k)
-        # image.show()
-        image.save(folder + base_filename + str(k) + '.PNG')
+        image.save(results_folder + base_filename + str(k) + '.PNG')
