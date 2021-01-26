@@ -1,7 +1,10 @@
+from pathlib import WindowsPath
+from scipy import sparse
 import scipy.io as scio
 import numpy as np
 import os
 from PIL import Image
+from matplotlib import pyplot as plt
 
 
 def chem_el_tiff_to_array(imgfile):
@@ -75,3 +78,28 @@ def save_clusters_images(clusters, base_filename='c'):
         img_k = img_k.reshape(418, 418, order = 'F') # parameter 'F' is used to make the right position of image. (MATLAB reads arrays with a different order)
         image = Image.fromarray(img_k)
         image.save(results_folder + base_filename + str(k) + '.PNG')
+
+
+def get_clusters_spectras(clusters, write_in_file = False):
+    """ Compute the representative spectra of each cluster. """
+    data = np.load('./data/B.npy')
+    avg_spectras = np.zeros((clusters.shape[1], 2048))
+    
+    # for each cluster
+    for i, row in enumerate(clusters):
+        j = np.argmax(row) # accendo il pixel i nel gruppo j se i ha valore massimo nella colonna j.
+        
+        # aggiungo lo spettro del pixel i allo spettro cumulativo del gruppo j
+        avg_spectras[j] += data[i]
+
+    # divido ogni spettro del gruppo j per il corrispondente numero di pixel accesi
+    for j in range(0, avg_spectras.shape[0]):
+        avg_spectras[j] = avg_spectras[j] / np.count_nonzero(clusters[:, j])
+        np.save('./results/B/avg_spectra_' + str(j) + '.npy', avg_spectras[j])
+        plt.clf()
+        plt.plot(avg_spectras[j])
+        plt.show()
+    if write_in_file:
+        plt.savefig('./results/B/avg_spectra_' + str(j) + '.png', dpi=300)
+    
+    return avg_spectras
