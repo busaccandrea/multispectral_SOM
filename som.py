@@ -5,6 +5,8 @@ import matplotlib.patches as mptchs
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial.distance import cdist
+from scipy.spatial.distance import mahalanobis
+
 from sklearn.decomposition import PCA
 
 
@@ -49,6 +51,9 @@ class SOM(object):
         self.error = 0.  # reconstruction error
         self.history = []  # reconstruction error training history
 
+        # mahalobis distances
+        # self.mahalobis = np.zeros((x, y, ))
+
     def initialize(self, data, how='pca'):
         """ Initialize the SOM neurons
         :param data: {numpy.ndarray} data to use for initialization
@@ -72,6 +77,27 @@ class SOM(object):
         indx = np.argmin(np.sum((self.map - vector) ** 2, axis=2))
         return np.array([indx // self.y, indx % self.y])
 
+    def winner_mahalobis(self, vector):
+        """ Compute the winner neuron closest to the vector (Euclidean distance)
+        :param vector: {numpy.ndarray} vector of current data point(s)
+        :return: indices of winning neuron
+        """
+        mahalanobis_distances = np.zeros(self.shape)
+        for i in range(self.x):
+            for j in range(self.y):
+                cov_mat = np.stack((self.map[i][j], vector), axis = 1)  
+                v = np.cov(cov_mat)
+                try:
+                    iv = np.linalg.inv(v)
+                except:
+                    iv = v
+                a = mahalanobis(self.map[i][j], vector, iv)
+                if np.isnan(a):
+                    a = 99
+                mahalanobis_distances[i][j] = a**2
+        indx = np.argmin(mahalanobis_distances)
+        return np.array([indx // self.y, indx % self.y])
+
     def cycle(self, vector):
         """ Perform one iteration in adapting the SOM towards a chosen data point
         :param vector: {numpy.ndarray} current data point
@@ -84,8 +110,8 @@ class SOM(object):
         # update neuron weights
         self.map -= h * self.alphas[self.epoch] * (self.map - vector)
 
-        print("Epoch %i;    Neuron [%i, %i];    \tSigma: %.4f;    alpha: %.4f" %
-              (self.epoch, w[0], w[1], self.sigmas[self.epoch], self.alphas[self.epoch]))
+        # print("Epoch %i;    Neuron [%i, %i];    \tSigma: %.4f;    alpha: %.4f" %
+        #       (self.epoch, w[0], w[1], self.sigmas[self.epoch], self.alphas[self.epoch]))
         self.epoch = self.epoch + 1
 
     def fit(self, data, epochs=0, save_e=False, interval=1000, decay='hill'):
@@ -122,6 +148,8 @@ class SOM(object):
                     self.history.append(self.som_error(data))
         else:
             for i in range(epochs):
+                if int(i * 100 / epochs) % 5 == 0:
+                    print(int(i * 100 / epochs),'%', end='\r')
                 self.cycle(data[indx[i]])
         self.error = self.som_error(data)
 
