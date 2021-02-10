@@ -1,10 +1,14 @@
 from pathlib import WindowsPath
 from scipy import sparse
+import scipy
+from scipy.stats import pearsonr
 import scipy.io as scio
 import numpy as np
 import os
 from PIL import Image
 from matplotlib import pyplot as plt
+import matplotlib.image as mpimg
+import glob
 
 
 def chem_el_tiff_to_array(imgfile):
@@ -67,20 +71,28 @@ def get_coord_from_pixel(pixel:int):
     return row, col
 
 
-def save_clusters_images(clusters, base_filename='c'):
+def save_clusters_images_old(clusters, base_filename='c'):
     """
     Given the matrix of clusters, save an image (png) for every cluster.
     The input is a matrix with shape (#pixels, #cluster).
     """
-    results_folder = './results/'
     for k in range(0, clusters.shape[1]):# 0-> #clusters
         img_k = clusters[:,k]
         img_k = img_k.reshape(418, 418, order = 'F') # parameter 'F' is used to make the right position of image. (MATLAB reads arrays with a different order)
         image = Image.fromarray(img_k)
-        image.save(results_folder + base_filename + str(k) + '.PNG')
+        image.save('results/' + base_filename + str(k) + '.PNG')
 
 
-def get_clusters_spectras(clusters, write_in_file = False):
+def save_clusters_images(clusters_perc, folder='c'):
+    for k in range(0, clusters_perc.shape[1]):# 0-> #clusters
+        img_k = clusters_perc[:,k]
+        img_k = img_k.astype(np.uint8)
+        img_k = img_k.reshape(418, 418, order = 'F') # parameter 'F' is used to make the right position of image. (MATLAB reads arrays with a different order)
+        image = Image.fromarray(img_k)
+        image.save('results/' + folder + str(k) + '.PNG')
+
+
+def get_clusters_spectras_old(clusters, write_in_file = False):
     """ Compute the representative spectra of each cluster. """
     data = np.load('./data/B.npy')
     avg_spectras = np.zeros((clusters.shape[1], 2048))
@@ -99,7 +111,33 @@ def get_clusters_spectras(clusters, write_in_file = False):
         plt.clf()
         plt.plot(avg_spectras[j])
         plt.show()
-    if write_in_file:
-        plt.savefig('./results/B/avg_spectra_' + str(j) + '.png', dpi=300)
+        if write_in_file:
+            plt.savefig('./results/B/avg_spectra_' + str(j) + '.png', dpi=300)
     
     return avg_spectras
+
+def get_clusters_spectras(clusters, allow_average=False, write_in_file = False, filename=''):
+    """ Compute the representative spectra of each cluster. """
+    data = np.load('./data/B.npy')
+    spectras = np.zeros((clusters.shape[1], 2048)) # [8, 2048]
+    
+    for pixel, perc_array in enumerate(clusters):
+        for cluster_index, _ in enumerate(spectras):
+            spectras[cluster_index] += data[pixel] * perc_array[cluster_index]
+
+    # divido ogni spettro del gruppo j per il corrispondente numero di pixel accesi
+    for j in range(0, spectras.shape[0]):
+        if allow_average:
+            spectras[j] = spectras[j] / np.sum(clusters[:, j])
+        
+        plt.plot(spectras[j])
+
+        np.save('results/' + filename + '/' + 'avg_perc_spectra_' + str(j) + '.npy', spectras[j])
+        plt.clf()
+        plt.plot(spectras[j])
+        if write_in_file:
+            plt.savefig('./results/' + filename + '/' + 'avg_perc_spectra_' + str(j) + '.png', dpi=300)
+        # plt.show()
+    
+    return spectras
+
