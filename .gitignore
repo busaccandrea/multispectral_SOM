@@ -6,7 +6,7 @@ __pycache__/
 # My files
 ./EDF
 ./results
-./data
+./data/
 *.npy
 *.PNG
 *.npz
@@ -132,3 +132,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+data/
