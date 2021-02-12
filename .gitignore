@@ -6,6 +6,7 @@ __pycache__/
 # My files
 ./EDF
 ./results
+./data
 *.npy
 *.PNG
 *.npz
