@@ -9,18 +9,19 @@ from sklearn.preprocessing import MinMaxScaler
 import utilities
 import reduce_dim_spectra as reduce_dim
 import processing_data
+from compare import Comparison
 
 if __name__ == '__main__':  
     # if this file exists, the SOM is already trained...
     # Define the map shape.
     map_height = 2
-    map_width = 3
+    map_width = 4
 ######################################### SET THIS VAR BEFORE LAUNCH ########################################################    
     reduction_method = 'pca'                                                                                                #
 #############################################################################################################################
     # for NNMF
-    n_components = 6
-    smoothing = 10
+    n_components = 10
+    smoothing = 5
 
 
     if os.path.isfile('data/' + reduction_method + '/' + 'clusters_' + str(n_components) + '_' + str(smoothing) + '_' + str(map_height) + 'x' + str(map_width) +'.npy'):
@@ -38,7 +39,7 @@ if __name__ == '__main__':
             # load data 
             datafilename = 'data/' + reduction_method + '/W_' + str(n_components) + '_comp_smth_' + str(smoothing) + '.npy'
         else:
-            datafilename = 'data/' + reduction_method + '/data_' + str(n_components) + '_comp_smth_' + str(smoothing) + '.npy'
+            datafilename = 'data/' + reduction_method + '/data_' + str(n_components) + '_comp' + '.npy'
 
 
         if os.path.isfile(datafilename):
@@ -53,15 +54,19 @@ if __name__ == '__main__':
                 data = reduce_dim.pca_based(data=B, n_components_=n_components, write_to_file=True)
             print("Done and saved.")
 
+
+        data = data[:, 0:4]
+        print(data.shape)
+
         # initialize cluster matrix (shape: [#pixel, #cluster])
-        perc_clusters = np.zeros([data.shape[0], map_height*map_width], dtype=np.uint8)
+        clusters = np.zeros([data.shape[0], map_height*map_width], dtype=np.uint8)
         percentages = np.zeros([data.shape[0], map_height*map_width], dtype=np.float32)
         
         # initialize SOM 
         alpha_start = 1 # default value = 0.6
         seed = 2233 # default value = 2233
         nn = SOM(map_height, map_width, alpha_start=alpha_start, seed=seed)
-        som_file = 'som_' + reduction_method + str(n_components) + '_' + str(smoothing) + '_' + str(map_height) + 'x' + str(map_width) +'.p'
+        som_file = 'data/checkpoints/som_' + reduction_method + str(n_components) + '_' + str(smoothing) + '_' + str(map_height) + 'x' + str(map_width) +'.p'
         if os.path.isfile(som_file):
             nn.load(filename=som_file)
             print('Loaded som.')
@@ -77,15 +82,18 @@ if __name__ == '__main__':
             # cluster = map_width * row_winner + col_winner   # <--------------------------------------'
             distances = np.sum((nn.map - row) ** 2, axis=2)
             percentages[idx] = processing_data.data_clustering(distances)
-            perc_clusters[idx] = np.uint8(255 * percentages[idx])
+            clusters[idx] = np.uint8(255 * percentages[idx])
         # np.save('clusters_' + reduction_method + '_' + str(map_height) + 'x' + str(map_width)  +'.npy', clusters)
-        np.save('data/' + reduction_method + '/' + 'clusters_' + str(n_components) + '_' + str(smoothing) + '_' + str(map_height) + 'x' + str(map_width) +'.npy', perc_clusters)
+        np.save('data/som/' + reduction_method + '/' + 'clusters_' + str(n_components) + '_' + str(smoothing) + '_' + str(map_height) + 'x' + str(map_width) +'.npy', clusters)
 
-        # ... so let's exports all images.
+        # # ... so let's exports all images.
         print('Saving images...')
-        utilities.save_clusters_images(clusters_perc=perc_clusters, folder=reduction_method + '/')
+        utilities.save_clusters_images(clusters_perc=clusters, basename='som/' + reduction_method + '/')
         print('Done. Saving spectras...')
-        utilities.get_clusters_spectras(perc_clusters, filename= reduction_method, write_in_file=True)
+        utilities.get_clusters_spectras(clusters, filename= 'som/' + reduction_method + '/', write_in_file=True)
         print('Done.')
 
-        print(reduction_method, 'components=', n_components, 'smoothing=', smoothing, 'h=', map_height, 'w=', map_width)
+
+        # comparison metrics
+        comparison = Comparison(data=clusters)
+        comparison.compute_all(verbose=True)
