@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
         # ... so let's exports all images.
         print('Saving images...')
-        utilities.save_clusters_images(clusters_perc=clusters_perc, folder=reduction_method + '/')
+        utilities.save_clusters_images(clusters_perc=clusters_perc, basename=reduction_method + '/')
         print('Done. Saving spectras...')
         utilities.get_clusters_spectras(clusters_perc, filename= reduction_method, write_in_file=True)
         print('Done.')
