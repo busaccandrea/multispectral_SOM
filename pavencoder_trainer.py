@@ -14,12 +14,14 @@ from Pavencoder import train
 if __name__ == '__main__':
 
     # define which device is available.
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
     # define batch size for AE
-    batch_size = 64
+    batch_size = 256
 
     # data file name to use for training
-    data_filename = 'data/data.npy'
+    # data_filename = 'data/Edf20MS/Edf/data.npy'
+    data_filename = 'data/data_cut.npy'
     
     # split data in two 2-dimensional tensors: 70% training set, 30% test set.
     [training_set, test_set] = split_data_from_numpy(data_filename)

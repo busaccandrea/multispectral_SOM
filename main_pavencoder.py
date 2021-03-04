@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from scipy import sparse
 import torch
 import os
+from torch import tensor
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 import numpy as np
@@ -21,24 +22,23 @@ if __name__=='__main__':
         [model, optimizer, checkpoint] = load_model_for_inference(model_filename, checkpoint_filename)
 
     # model to device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-    print('Model loaded and moved to :', device)
+    device = "cpu"
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # define batch size for AE
-    batch_size = 64
 
     # load data file
-    data_np = np.load('data/data.npy')
+    # data_np = np.load('data/data.npy')
+    data_np = np.load('data/data_cut.npy')
     # data to tensor
     data = torch.tensor(data_np).float()
+    data.to(device)
     sum_dec = 0 * data[0]
-
-    dataloader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=False)
+    sum_dec.to(device)
     model.eval()
-
+    model.to(device)
+    print('Model loaded and moved to :', device)
     for row in data:
-        code = model.encoder(row)
+        code = model.encoder(row).to(device)
         decoded = model.decoder(code)
         sum_dec += decoded
 

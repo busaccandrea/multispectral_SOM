@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from numpy.core.shape_base import block
 from scipy import sparse
 import torch
 import torch.nn as nn
@@ -11,26 +12,35 @@ class Pavencoder(nn.Module):
     def __init__(self, input_size, hidden=10):
         super(Pavencoder, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Linear(input_size,512),
-            nn.ReLU(),
-            nn.Linear(512, 128),
-            nn.ReLU(),
-            nn.Linear(128, hidden)
+            nn.Linear(input_size,1024),
+            nn.ELU(),
+            nn.Linear(1024,512),
+            nn.ELU(),
+            nn.Linear(512 ,128),
+            nn.ELU(),
+            nn.Linear(128, 32),
+            nn.ELU(),
+            nn.Linear(32, hidden)
         )
         
         self.decoder = nn.Sequential(
-            nn.Linear(hidden, 128),
-            nn.ReLU(),
+            nn.Linear(hidden, 32),
+            nn.ELU(),
+            nn.Linear(32, 128),
+            nn.ELU(),
             nn.Linear(128, 512),
-            nn.ReLU(),
-            nn.Linear(512, input_size)
+            nn.ELU(),
+            nn.Linear(512, 1024),
+            nn.ELU(),
+            nn.Linear(1024, input_size)
         )
     
     def forward(self, x):
         return self.decoder(self.encoder(x))
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = "cpu"
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def evaluate(losses, autoencoder, dataloader, flatten=True, vae=False, conditional=False, title=""):
 #     display.clear_output(wait=True)
@@ -63,6 +73,7 @@ def calculate_loss(model, dataloader, loss_fn=nn.MSELoss(), flatten=True, condit
             
         losses.append(loss)
 
+    # return losses.item()
     return (sum(losses)/len(losses)).item() # calculate mean
 
 def train(net, train_dataloader, test_dataloader, epochs=5, flatten=False, loss_fn=nn.MSELoss(), save_state=True, verbose=True):
@@ -94,14 +105,14 @@ def train(net, train_dataloader, test_dataloader, epochs=5, flatten=False, loss_
             train_losses.append(loss.item())
         
         evaluate(validation_losses, net, test_dataloader, flatten)
-    if save_state:
-        torch.save(net, 'data/pavencoder/model.pt')
-        torch.save({
-                'epoch': i,
-                'model_state_dict': net.state_dict(),
-                'optimizer_state_dict': optim.state_dict(),
-                'loss': loss
-                }, 'data/pavencoder/model_checkpoint.pt')
+        if save_state:
+            torch.save(net, 'data/pavencoder/model.pt')
+            torch.save({
+                    'epoch': i,
+                    'model_state_dict': net.state_dict(),
+                    'optimizer_state_dict': optim.state_dict(),
+                    'loss': loss
+                    }, 'data/pavencoder/model_checkpoint.pt')
     if verbose:
         plt.plot(train_losses, 'b', validation_losses, 'r')
         # show plot in fullscreen
