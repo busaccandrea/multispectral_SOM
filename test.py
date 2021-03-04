@@ -4,37 +4,22 @@ from scipy import sparse
 from sklearn.preprocessing import MinMaxScaler
 from scipy.signal import find_peaks
 import matplotlib.pyplot as plt
+import edf_read
+import time
+
+# campione = np.load('data/Edf20MS/Edf/data.npy')
+a = np.load('data/data_cut.npy')
+
+for row in a:
+    for c in row:
+        if c != 0:
+            print(c)
 
 
-# # per caricare un file .mat usare la libreria di scipy.io
-mat_file = scio.loadmat('./B.mat')
-B_ = mat_file["B"]
-B = np.zeros(B_.shape)
-
-# spectra = B_[0]
 
 
-
-
-
-# # normalizzazione
-# scaler = MinMaxScaler(feature_range=(0, 255))
-# B = scaler.fit_transform(B)
-
-# #salvataggio in matrice sparsa
-# sparse_B = sparse.csr_matrix(B)
-# sparse.save_npz("sparse_B", sparse_B, compressed=True)
-
-
-# # # per smoothing
-# smth = 5 # dimensione media mobile
-# half_smth = int(smth/2)
-# smoothed_data = np.zeros(B.shape, dtype=float)
-
-# for row in range(0, B.shape[0]):
-#     # utilizzo la convoluzione per determinare in modo efficiente la media mobile sulle righe di B
-#     smoothed_data[row] = np.convolve(B[row], np.ones(smth), 'same') / smth
-# sparse_SB = sparse.csr_matrix(smoothed_data)
-# sparse.save_npz('B_smth' + str(smth), sparse_SB, compressed=True)
-
-
+# super_threshold_indices = a < 4
+# print(np.count_nonzero(a))
+# a[super_threshold_indices] = 0
+# print(np.count_nonzero(a))
+# np.save('data/data_cut.npy', a)
