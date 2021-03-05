@@ -154,3 +154,10 @@ def get_clusters_spectras(clusters, allow_average=False, write_in_file = False, 
         # plt.show()
     
     return spectras
+
+def check_existing_folder(path):
+    if os.path.exists(path):
+        quit()
+    else:
+        os.makedirs(path)
+        print('Folder not found, created.')
