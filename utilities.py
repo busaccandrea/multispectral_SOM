@@ -21,22 +21,6 @@ def chem_el_tiff_to_array(imgfile):
     return col_array.T
 
 
-def get_matrix_from_chem_el_tiff_(path_folder, save_to_file=True):
-    """
-    reads only the .tiff the path and builds a matrix [418*418, N], where N is the number of chem-elem-tiffs
-    """
-    listfiles = os.listdir(path_folder)
-    M = np.zeros([418*418, len(listfiles)])
-    for i, f in enumerate(listfiles):
-        col_array = chem_el_tiff_to_array(path_folder + f)
-        idx = int(f[0]) - 1
-        M[:, idx] = col_array
-
-    if save_to_file:
-        np.save('M_from_chem_el_tiffs', M)
-    
-    return M
-
 def get_matrix_from_chem_el_tiffs(file_list, save_to_file=True):
     """
     reads only the .tiff the path and builds a matrix [418*418, N], where N is the number of chem-elem-tiffs
@@ -84,18 +68,6 @@ def get_coord_from_pixel(pixel:int):
     return row, col
 
 
-def save_clusters_images_old(clusters, base_filename='c'):
-    """
-    Given the matrix of clusters, save an image (png) for every cluster.
-    The input is a matrix with shape (#pixels, #cluster).
-    """
-    for k in range(0, clusters.shape[1]):# 0-> #clusters
-        img_k = clusters[:,k]
-        img_k = img_k.reshape(418, 418, order = 'F') # parameter 'F' is used to make the right position of image. (MATLAB reads arrays with a different order)
-        image = Image.fromarray(img_k)
-        image.save('results/' + base_filename + str(k) + '.PNG')
-
-
 def save_clusters_images(clusters_perc, basename='c'):
     for k in range(0, clusters_perc.shape[1]):# 0-> #clusters
         img_k = clusters_perc[:,k]
@@ -103,32 +75,9 @@ def save_clusters_images(clusters_perc, basename='c'):
         img_k = img_k.reshape(418, 418, order = 'F') # parameter 'F' is used to make the right position of image. (MATLAB reads arrays with a different order)
         image = Image.fromarray(img_k)
         # image.show()
+        check_existing_folder('results/' + basename)
         image.save('results/' + basename + str(k) + '.PNG')
 
-
-# def get_clusters_spectras_old(clusters, write_in_file = False):
-#     """ Compute the representative spectra of each cluster. """
-#     data = np.load('./data/B.npy')
-#     avg_spectras = np.zeros((clusters.shape[1], 2048))
-    
-#     # for each cluster
-#     for i, row in enumerate(clusters):
-#         j = np.argmax(row) # accendo il pixel i nel gruppo j se i ha valore massimo nella colonna j.
-        
-#         # aggiungo lo spettro del pixel i allo spettro cumulativo del gruppo j
-#         avg_spectras[j] += data[i]
-
-#     # divido ogni spettro del gruppo j per il corrispondente numero di pixel accesi
-#     for j in range(0, avg_spectras.shape[0]):
-#         avg_spectras[j] = avg_spectras[j] / np.count_nonzero(clusters[:, j])
-#         np.save('./results/B/avg_spectra_' + str(j) + '.npy', avg_spectras[j])
-#         plt.clf()
-#         plt.plot(avg_spectras[j])
-#         plt.show()
-#         if write_in_file:
-#             plt.savefig('./results/B/avg_spectra_' + str(j) + '.png', dpi=300)
-    
-#     return avg_spectras
 
 def get_clusters_spectras(clusters, allow_average=False, write_in_file = False, filename=''):
     """ Compute the representative spectra of each cluster. """
@@ -146,6 +95,7 @@ def get_clusters_spectras(clusters, allow_average=False, write_in_file = False, 
         
         # plt.plot(spectras[j])
 
+        check_existing_folder('results/' + filename)
         np.save('results/' + filename + 'avg_perc_spectra_' + str(j) + '.npy', spectras[j])
         plt.clf()
         plt.plot(spectras[j])
@@ -156,8 +106,6 @@ def get_clusters_spectras(clusters, allow_average=False, write_in_file = False, 
     return spectras
 
 def check_existing_folder(path):
-    if os.path.exists(path):
-        quit()
-    else:
+    if not os.path.exists(path):
         os.makedirs(path)
         print('Folder not found, created.')
