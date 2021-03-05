@@ -11,6 +11,7 @@ __pycache__/
 *.PNG
 *.npz
 *.p
+*.pdf
 .vs/
 
 # C extensions
