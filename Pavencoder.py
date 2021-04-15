@@ -12,27 +12,13 @@ class Pavencoder(nn.Module):
     def __init__(self, input_size, hidden=10):
         super(Pavencoder, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Linear(input_size,1024),
-            nn.ELU(),
-            nn.Linear(1024,512),
-            nn.ELU(),
-            nn.Linear(512 ,128),
-            nn.ELU(),
-            nn.Linear(128, 32),
-            nn.ELU(),
-            nn.Linear(32, hidden)
+            nn.Linear(input_size,hidden),
+            nn.ReLU()
         )
         
         self.decoder = nn.Sequential(
-            nn.Linear(hidden, 32),
-            nn.ELU(),
-            nn.Linear(32, 128),
-            nn.ELU(),
-            nn.Linear(128, 512),
-            nn.ELU(),
-            nn.Linear(512, 1024),
-            nn.ELU(),
-            nn.Linear(1024, input_size)
+            nn.Linear(hidden, input_size),
+            nn.ReLU()
         )
     
     def forward(self, x):
@@ -86,7 +72,7 @@ def train(net, train_dataloader, test_dataloader, epochs=5, flatten=False, loss_
         loss_fn: loss function to use. (default: MSE)
         save_state: if true, after the last epoch the model will be saved.
      """
-    optim = torch.optim.Adam(net.parameters())
+    optim = torch.optim.Adam(net.parameters(), weight_decay=0.01)
     
     train_losses = []
     validation_losses = []
@@ -115,6 +101,7 @@ def train(net, train_dataloader, test_dataloader, epochs=5, flatten=False, loss_
                     }, 'data/pavencoder/model_checkpoint.pt')
     if verbose:
         plt.plot(train_losses, 'b', validation_losses, 'r')
+        plt.plot(validation_losses, 'r')
         # show plot in fullscreen
         manager = plt.get_current_fig_manager()
         manager.window.showMaximized()
@@ -149,6 +136,8 @@ def split_data_from_numpy(data_filename):
     """
     data = np.load(data_filename)
     [train_data, test_data] = split_data(data)
+    np.save('train_dataset.npy', train_data)
+    np.save('test_dataset.npy', test_data)
     training_set = torch.tensor(train_data).float()
     test_set = torch.tensor(test_data).float()
     
