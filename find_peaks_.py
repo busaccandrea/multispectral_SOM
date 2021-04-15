@@ -24,10 +24,12 @@ def sum_spectra(spectra_matrix, write_in_file=False):
     Compute the sum spectra of input.
     Input is the matrix of spectra.
     """
-    sum_spectra = np.zeros(2048)
-    for col in range(0, 2048):
-        sum_spectra[col] = np.sum(spectra_matrix[:,col])
+    # sum_spectra = np.zeros(spectra_matrix.shape[1])
+    # for col in range(0, sum_spectra.shape[1]):
+    #     sum_spectra[col] = np.sum(spectra_matrix[:,col])
 
+    sum_spectra = np.sum(spectra_matrix, axis=0)
+    
     if write_in_file:
         np.save('sum_spectra.npy', sum_spectra)
     
