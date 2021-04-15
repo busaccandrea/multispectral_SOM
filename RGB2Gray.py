@@ -1,3 +1,5 @@
+from random import sample
+from matplotlib import animation
 import torch
 import numpy as np
 from torch import optim
@@ -7,6 +9,8 @@ from torch.nn.modules.batchnorm import BatchNorm2d
 from torch.optim import Adam, optimizer
 from sklearn.metrics import accuracy_score
 from utilities import check_existing_folder
+from matplotlib import pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 """ modello per la separazione del pentimento dal visibile.
                                         real Pb Rx |-->
@@ -62,23 +66,33 @@ class RGB2Gray(nn.Module):
                     nn.Conv2d(in_channels=256, out_channels=1, kernel_size=5, padding=2),
                     nn.BatchNorm2d(num_features=1),
                     nn.ReLU())
+        self.losses = []
 
     def forward(self, x):
         x = self.hidden_layers(x)
+        return x
 
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    def animation_(self):
+        plt.cla()
+        plt.plot(np.array(self.losses))
+
 
     def train_model(self, train_loader, lr=0.01, epochs=10):#, momentum=0.99
         optimizer = Adam(self.parameters(),lr=lr)
         criterion = nn.MSELoss()
         for e in range(epochs):
+            print('epoch:', e)
+            # Sets the module in training mode
             self.train()
             with torch.set_grad_enabled(True):
                 for _, batch in enumerate(train_loader):
-                    x = batch[0].to(self.device)
-                    y = batch[1].to(self.device)
+                    x = batch['rgb'].to(self.device)
+                    y = batch['pbl'].to(self.device).float()
+                    x = torch.reshape(x, (x.shape[0],x.shape[3],x.shape[2],x.shape[1])).float()
                     output = self(x)
+                    output = torch.squeeze(output)
                     #calcolo MSE tra f(x) e pbl
                     l = criterion(output, y)
 
@@ -87,9 +101,27 @@ class RGB2Gray(nn.Module):
                     optimizer.step()
                     optimizer.zero_grad()
 
-                    acc = accuracy_score(y.to('cpu'),output.to('cpu').max(1)[1])
-                    n = batch[0].shape[0]
+                    # acc = accuracy_score(y.to('cpu'),output.to('cpu').max(1)[1])
+                    # n = batch[0].shape[0]
 
-                    print('accuracy at epoch', e+1, ':', acc*n )
+                    # print('accuracy at epoch', e+1, ':', acc*n )
+                    # print('mse:', l.item())
+
+                    self.losses.append(l.item())
+                    # ani = FuncAnimation(plt.gcf(), self.animation_())
+                    # plt.show()
+
             check_existing_folder('data/RGB2Gray/checkpoints/')
-            torch.save(self.state_dict(), 'data/RGB2Gray/checkpoints/%s-%d.pth', ('RGB2Gray',str(e+1)))
+            torch.save(self.state_dict(), 'data/RGB2Gray/checkpoints/%s.pth'%('RGB2Gray'))
+        plt.plot(self.losses)
+        plt.show()
+
+    def batch_test(self, loader):
+        output_dict = {'rgb' : [], 'pbl' : []}
+        for _, batch in enumerate(loader):
+            x = batch['rgb']
+            x = torch.reshape(x, (x.shape[0],x.shape[3],x.shape[2],x.shape[1])).float()
+            x = self(x)
+            output_dict['rgb'].append(x)
+            output_dict['pbl'].append(batch['pbl'])
+        return output_dict
