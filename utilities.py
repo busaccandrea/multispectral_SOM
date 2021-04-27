@@ -1,13 +1,8 @@
-from pathlib import WindowsPath
-from scipy import sparse
-import scipy
 import scipy.io as scio
 import numpy as np
 import os
 from PIL import Image
 from matplotlib import pyplot as plt
-import matplotlib.image as mpimg
-import glob
 
 
 def chem_el_tiff_to_array(imgfile):
@@ -109,3 +104,124 @@ def check_existing_folder(path):
     if not os.path.exists(path):
         os.makedirs(path)
         print('Folder not found, created.')
+
+def get_area_coordinates(data, point0, point3):
+    """ given two data points (point0 and point3), returns the point set of area between those points.
+        it's used to build a balanced dataset and to replicate a little set of spectra.
+
+        point0 ._____________.  point1
+               |             |
+               |             |
+        point2 !_____________! point3
+                                                    """
+
+    (p0x, p0y) = point0
+    (p3x, p3y) = point3
+    
+    # point1
+    p1x = min(p0x,p3x)
+    p1y = max(p0y,p3y)
+    
+    # point2
+    p2x = max(p0x,p3x)
+    p2y = min(p0y,p3y)
+
+    d = data.reshape((130, 185, data.shape[1])) #the shape of square data
+
+    return d[p0x: p2x, p0y:p3y]
+
+"""             point0   |  point3
+ 1  * zona 1:
+ 1  * zona 2:   
+ 1  * zona 3:
+ 1  * zona 4:
+ 1  * zona 5:
+ 1  * zona 6:
+ 1  * zona 7:
+ 1  * zona 8:
+ 8  * zona 9:   94,0        117,14
+ 4  * zona 10:  95,17       117,39
+ 2  * zona 11:  95,42       129,90
+ 2  * zona 12:  95,95       129,140
+ 4  * zona 13:  96,142      118,165
+ 8  * zona 14:  96,169      118,184
+16  * zona 15:  119,0       129,14
+ 8  * zona 16:  119,17      39,129
+ 8  * zona 17:  119,142     165,129
+16  * zona 18:  120,167     129,184
+                                        """
+""" data = np.load('./data/Edf20MS/data_nobg.npy')
+new_data = data.copy()
+
+# zona 9
+zone9 = get_area_coordinates(data, (94,0), (117,14))
+x, y, z = zone9.shape
+zone9 = zone9.reshape((x*y, z))
+for _ in range(8):
+    new_data = np.concatenate((new_data, zone9), axis=0)
+
+# zona10
+zone10 = get_area_coordinates(data, (95,17), (117,39))
+x, y, z = zone10.shape
+zone10 = zone10.reshape((x*y, z))
+for _ in range(4):
+    new_data = np.concatenate((new_data, zone10), axis=0)
+
+# zone11
+zone11 = get_area_coordinates(data, (95,42), (129,90))
+x, y, z = zone11.shape
+zone11 = zone11.reshape((x*y, z))
+for _ in range(2):
+    new_data = np.concatenate((new_data, zone11), axis=0)
+
+# zone12
+zone12 = get_area_coordinates(data, (95,95 ), (129,90))
+x, y, z = zone12.shape
+zone12 = zone12.reshape((x*y, z))
+for _ in range(2):
+    new_data = np.concatenate((new_data, zone12), axis=0)
+
+# zone13
+zone13 = get_area_coordinates(data, (96,142), (118,165))
+x, y, z = zone13.shape
+zone13 = zone13.reshape((x*y, z))
+for _ in range(4):
+    new_data = np.concatenate((new_data, zone13), axis=0)
+
+# zone14
+zone14 = get_area_coordinates(data, (96,142), (118,184))
+x, y, z = zone14.shape
+zone14 = zone14.reshape((x*y, z))
+for _ in range(8):
+    new_data = np.concatenate((new_data, zone14), axis=0)
+
+# zone15
+zone15 = get_area_coordinates(data, (119,0), (129,14))
+x, y, z = zone15.shape
+zone15 = zone15.reshape((x*y, z))
+for _ in range(16):
+    new_data = np.concatenate((new_data, zone15), axis=0)
+
+# zone16
+zone16 = get_area_coordinates(data, (119,17), (39,129))
+x, y, z = zone16.shape
+zone16 = zone16.reshape((x*y, z))
+for _ in range(8):
+    new_data = np.concatenate((new_data, zone16), axis=0)
+
+# zone17
+zone17 = get_area_coordinates(data, (119,142), (165,129))
+x, y, z = zone17.shape
+zone17 = zone17.reshape((x*y, z))
+for _ in range(8):
+    new_data = np.concatenate((new_data, zone17), axis=0)
+
+# zone18
+zone18 = get_area_coordinates(data, (120,167), (129,184))
+x, y, z = zone18.shape
+zone18 = zone18.reshape((x*y, z))
+for _ in range(16):
+    new_data = np.concatenate((new_data, zone18), axis=0)
+
+print(data.shape, new_data.shape)
+np.save('./data/Edf20MS/data_nobg_enhanced.npy', new_data) """
