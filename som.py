@@ -4,7 +4,10 @@ from multiprocessing import cpu_count, Process, Queue
 import matplotlib.patches as mptchs
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.spatial.distance import cdist
+from numpy.core.arrayprint import printoptions
+from numpy.core.fromnumeric import argmax
+from numpy.core.numeric import zeros_like
+from scipy.spatial.distance import cdist, jaccard
 from scipy.spatial.distance import mahalanobis
 
 from sklearn.decomposition import PCA
@@ -39,7 +42,7 @@ class SOM(object):
         self.sigma = x / 2.
         self.alpha_start = alpha_start
         self.alphas = None
-        self.sigmas = None
+        self.sigmas = 0.1
         self.epoch = 0
         self.interval = 0
         self.map = np.array([])
@@ -51,8 +54,16 @@ class SOM(object):
         self.error = 0.  # reconstruction error
         self.history = []  # reconstruction error training history
 
+        self.jaccards = np.array([])
+
         # mahalobis distances
         # self.mahalobis = np.zeros((x, y, ))
+
+    def initialize_(self, data):
+        self.map = np.random.normal(np.mean(data), np.std(data), size=(self.x, self.y, len(data[0])))
+        self.map = np.abs(self.map)
+        self.jaccards = np.zeros((self.x * self.y, data.shape[1]))
+        self.inizialized = True
 
     def initialize(self, data, how='pca'):
         """ Initialize the SOM neurons
@@ -66,7 +77,7 @@ class SOM(object):
             eivalues = PCA(4).fit_transform(data.T).T
             for i in range(4):
                 self.map[np.random.randint(0, self.x), np.random.randint(0, self.y)] = eivalues[i]
-
+        self.jaccards = np.zeros((self.x * self.y, data.shape[1]))
         self.inizialized = True
 
     def winner(self, vector):
@@ -74,7 +85,11 @@ class SOM(object):
         :param vector: {numpy.ndarray} vector of current data point(s)
         :return: indices of winning neuron
         """
-        indx = np.argmin(np.sum((self.map - vector) ** 2, axis=2))
+        # indx = np.argmin(np.sum((self.map - vector) ** 2, axis=2))
+        self.jaccard_index(vector)
+        indx = np.argmax(np.sum(self.jaccards, axis=1))
+        # print(indx)
+        # quit()
         return np.array([indx // self.y, indx % self.y])
 
     def winner_mahalobis(self, vector):
@@ -98,22 +113,42 @@ class SOM(object):
         indx = np.argmin(mahalanobis_distances)
         return np.array([indx // self.y, indx % self.y])
 
-    def cycle(self, vector):
-        """ Perform one iteration in adapting the SOM towards a chosen data point
+    def cycle_new(self, vector):
+        """ 
+        Perform one iteration in adapting the SOM towards a chosen data point
         :param vector: {numpy.ndarray} current data point
         """
         w = self.winner(vector)
         # get Manhattan distance (with PBC) of every neuron in the map to the winner
         dists = man_dist_pbc(self.indxmap, w, self.shape)
-        # smooth the distances with the current sigma
+        # smooth the distances with the current sigma (sigma = neighborhood radius)
         h = np.exp(-(dists / self.sigmas[self.epoch]) ** 2).reshape(self.x, self.y, 1)
-        # update neuron weights
-        self.map -= h * self.alphas[self.epoch] * (self.map - vector)
 
-        # print("Epoch %i;    Neuron [%i, %i];    \tSigma: %.4f;    alpha: %.4f" %
-        #       (self.epoch, w[0], w[1], self.sigmas[self.epoch], self.alphas[self.epoch]))
+        # # update neuron weights
+        sum_jacs = np.sum(self.jaccards, axis=1)/vector.shape[0]
+        # print(sum_jacs)
+        # quit()
+        self.map += h * self.alphas[self.epoch] * ((self.map - (sum_jacs.reshape((self.x, self.y)) * self.jaccards.reshape(self.map.shape) * vector)))
+        # self.map += h * self.alphas[self.epoch] * (self.map - vector)
+
         self.epoch = self.epoch + 1
-
+ 
+    def cycle(self, vector): 
+        """ Perform one iteration in adapting the SOM towards a chosen data point 
+        :param vector: {numpy.ndarray} current data point 
+        """ 
+        w = self.winner(vector) 
+        # get Manhattan distance (with PBC) of every neuron in the map to the winner 
+        dists = man_dist_pbc(self.indxmap, w, self.shape) 
+        # smooth the distances with the current sigma 
+        h = np.exp(-(dists / self.sigmas[self.epoch]) ** 2).reshape(self.x, self.y, 1) 
+        # update neuron weights 
+        self.map -= h * self.alphas[self.epoch] * (self.map - vector) 
+ 
+        # print("Epoch %i;    Neuron [%i, %i];    \tSigma: %.4f;    alpha: %.4f" % 
+        #       (self.epoch, w[0], w[1], self.sigmas[self.epoch], self.alphas[self.epoch])) 
+        self.epoch = self.epoch + 1 
+ 
     def fit(self, data, epochs=0, save_e=False, interval=1000, decay='hill'):
         """ Train the SOM on the given data for several iterations
         :param data: {numpy.ndarray} data to train on
@@ -444,6 +479,20 @@ class SOM(object):
         f = open(filename, 'wb')
         pickle.dump(self.__dict__, f, 2)
         f.close()
+
+    def jaccard_index(self, sample):
+        [x,y,z] = self.map.shape
+        # maxjac = 0
+        self.map += 0.001
+        sample += 0.001
+        for c, neuron in enumerate(self.map.reshape((x*y,z))):
+            intersection = np.minimum(sample, neuron)
+            union = np.maximum(sample, neuron)
+            jaccard = intersection/union
+            self.jaccards[c] = jaccard/sample
+            # if np.sum(jaccard) > maxjac:
+            #     maxjac = c
+        self.map -= 0.001
 
     def load(self, filename):
         """ Save the SOM instance to a pickle file.
