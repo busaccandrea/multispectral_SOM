@@ -1,3 +1,4 @@
+from __future__ import with_statement
 from numpy.core.fromnumeric import argmin, ndim
 from Pavencoder import train
 import numpy as np
@@ -6,15 +7,16 @@ from glob import glob
 from sklearn.model_selection import train_test_split as ttsplit
 from sklearn.utils import validation
 from utilities import get_area_coordinates
+from PIL import Image
 
 """ script to build a dataset. """
-data_filename = 'data/Edf20MS/data.npy'
-data = np.load(data_filename)
-d = data.reshape((130, 185, 2048))
-testset_path = 'data/Edf20MS/test/*/'
-trainset_path ='data/Edf20MS/train/*/'
-testset_zones = glob(testset_path)
-trainset_zones = glob(trainset_path)
+# data_filename = 'data/Edf20MS/data.npy'
+# data = np.load(data_filename)
+# d = data.reshape((130, 185, 2048))
+# testset_path = 'data/Edf20MS/test/*/'
+# trainset_path ='data/Edf20MS/train/*/'
+# testset_zones = glob(testset_path)
+# trainset_zones = glob(trainset_path)
 
 def get_pixels_from_coords(points):
     row_start, row_end= points[0][0], points[1][0]
@@ -177,6 +179,8 @@ for idx, zone in enumerate(zones):
 np.save('./data/Edf20MS/zones/data2label.npy', dataset)
 
 # dataset for class 9 (Co) """
+
+""" # dataset for element VS all approach
 if __name__ == '__main__':
     el_distribution = np.array([
         [1,	0,	1,  1,  0,  1,  0,	0,	0,	0],
@@ -260,4 +264,30 @@ if __name__ == '__main__':
             # np.save('./data/Edf20MS/classes/'+str(element)+'_0.npy', negative_class)
             dataset = np.concatenate((positive_class, negative_class), axis=0)
             print('final dataset shape:', dataset.shape, '\npositive_class shape:', positive_class.shape,'\nnegative_class shape:', negative_class.shape)
-            np.save('./data/Edf20MS/classes/'+str(element)+'.npy',dataset)
+            np.save('./data/Edf20MS/classes/'+str(element)+'.npy',dataset) """
+
+# build the dataset for ChemElementRegressor
+# i need to cerrespond a number for each row of the dataset.
+# the number is taken by the maps from pymca
+if __name__ == '__main__':
+
+    data_filename = 'data/DOggionoGiulia/EDF/data.npy'
+    data = np.load(data_filename)
+    print(data.shape[0], data.shape[1])
+    elements = ['Ca-K','Cu-K','Fe-K','Hg-L','K-K','Mn-K','Pb-L','Sn-L','Sr-K','Ti-K']
+    for i, element in enumerate(elements):
+        # load the element map and convert it into a 1d-array
+        f = './data/DOggionoGiulia/float32/'+element+'.tif'
+        element_tiff = Image.open(f)
+        element_map = np.array(element_tiff)
+        element_map = element_map.reshape((element_map.shape[0] * element_map.shape[1]))
+        print(element, 'is', f)
+        
+        # create the csv file.
+        with open('./data/DOggionoGiulia/'+str(element)+'.csv', 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile, delimiter=' ')
+
+            for i, row in enumerate(data):
+                # c = 1 if element_map[i] > 200 else 0
+                # generic row: i-th_row n_counts
+                csv_writer.writerow([i, element_map[i]])
