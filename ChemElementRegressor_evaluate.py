@@ -1,4 +1,3 @@
-from math import sqrt
 import torch
 import numpy as np
 from PIL import Image
@@ -6,6 +5,10 @@ from time import time
 from sklearn.preprocessing import normalize
 from torch.functional import norm
 from matplotlib import pyplot as plt
+from torch.utils.data.dataloader import DataLoader
+from ChemElementRegressorDataset_for_evaluate import ChemElementRegressorDataset_for_evaluate
+from glob import glob
+from os import path
 
 """ 
     This script needs a trained model!
@@ -14,52 +17,52 @@ if __name__=='__main__':
     # define device to use
     start = time()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print('device available:', device)
     running_times = []
-    
-    elements = [
-        1,
-        2,
-        3,
-        4, # index out of bound
-        5, # index out of bound
-        6,
-        7,
-        8,
-        9
-    ]
+
+    data_np = np.load('data/DOggionoGiulia/EDF/data.npy')
+    data_set = ChemElementRegressorDataset_for_evaluate(data=data_np)
+    eval_loader = DataLoader(dataset=data_set, batch_size=256, shuffle=False)
+
+    # elements = ['Ca-K','Cu-K','Fe-K','Hg-L','K-K','Mn-K','Pb-L','Sn-L','Sr-K','Ti-K']
+    exclude = ['Ca-K','Cu-K','Fe-K','Hg-L','K-K','Pb-L','Sn-L','Sr-K','Ti-K']
+    elements = glob('data/DOggionoGiulia/checkpoints/*.p')
     for element in elements:
+        chemel = path.basename(element)[:4]
+        print('evaluating', chemel)
+        if chemel in exclude:
+            continue
         element_timestart = time()
-        model = torch.load('data/ChemElementRegressor/DOggionoGiuliaCa-Kconv.p')
+        model = torch.load(element)
         model.to(device)
         model.eval()
         print('Model loaded and moved to :', device)
         
-        # load data file
-        data_np = np.load('data/DOggionoGiulia/EDF/data.npy')
+        batch_size = 512
 
-        # data to tensor
-        data = torch.tensor(data_np)
-        
-        # outputs = torch.zeros(data.shape[0], requires_grad=False)
-        outputs = np.zeros(data.shape[0])
-        for i, row in enumerate(data):
-            print('evaluating data...', int(i/data.shape[0]*100), '%', end='\r')
-            # feed the model with current row. i-th result is in the i-th row and m-th column.
-            row = torch.unsqueeze(row, dim=0)
-            row = torch.unsqueeze(row, dim=1)
-            row = row.to(device)
-            model(row).to('cpu').detach()
-            tmp_output = model(row).to('cpu').detach()
-            # print(tmp_output)
+        first_time = True
+
+        for i, batch_ in enumerate(eval_loader):
+            print('batch:', i,'/', int(data_set.__len__()/batch_size), end='\r')
+            batch_ = batch_.to(device)
+            tmp_output = model(batch_)
+            tmp_output = torch.squeeze(tmp_output).to('cpu').detach()
             tmp_output[tmp_output<0] = 0
-            outputs[i] = tmp_output
+            if first_time:
+                outputs = tmp_output
+                first_time = False
+            else:
+                outputs = torch.cat((outputs, tmp_output), dim=0)
+            
         running_times.append(time() - element_timestart)
-        print('\nelement', element, 'evaluated.')
+        print('\n',element,'evaluated.')
 
+        outputs = outputs.numpy()
         outputs = outputs.reshape((418,418))
 
-        # img = Image.fromarray(outputs)
-        ground_truth = np.array(Image.open('./data/Edf20MS/classes/' + str(element) +'.tif'))
+        np.save('./data/DOggionoGiulia/' + chemel + 'evaluated.npy', outputs)
+
+        ground_truth = np.array(Image.open('./data/DOggionoGiulia/float32/'+ chemel + '.tif'))
         f1 = plt.figure(1)
         plt.imshow(ground_truth)
         f1.show()
