@@ -6,6 +6,7 @@ from time import time
 import numpy as np
 from torch.utils.data.sampler import Sampler
 import torchtest
+from matplotlib import pyplot as plt
 
 
 class ToTensor(object):
@@ -20,14 +21,24 @@ class ToTensor(object):
 
 class ChemElementRegressorDataset(Dataset):
     """ Build a custom dataset for ChemElementRegressor model """
-    def __init__(self, csv_file, data, labels, row_numbers, transform=ToTensor()):
+    def __init__(self, csv_file, data, labels, transform=ToTensor()):
         # print('DEBUG: creo il dataset')
         self.csv_file = pd.read_csv(csv_file, sep=' ')
         self.data = data
         self.labels = np.array(labels)
-        self.row_numbers = np.array(row_numbers)
-        self.high_count_idxs = np.where(self.labels>200)[0] # where label is > 200
-        self.low_count_idxs = np.where(self.labels<=200)[0] # where label is <= 200
+
+        x, _, _ = plt.hist(self.labels, bins=2000)
+        # show histogram of labels
+        plt.gca().set(title='Frequency Histogram', ylabel='Frequency')
+        plt.show()
+
+        self.threshold = np.argmax(x)
+        print('Threshold high/low counts:', np.max(x), self.threshold, self.threshold * 0.6)
+
+        self.high_count_idxs = np.where(self.labels>self.threshold)[0] # where label is > threshold
+        self.low_count_idxs = np.where(self.labels<=self.threshold)[0] # where label is <= threshold
+        print('ratio beetween high and low counts:', len(self.high_count_idxs),'/', len(self.low_count_idxs))
+
         self.trasform = transform
         self.pick_high = True
         # print('DEBUG: dataset creato.')
@@ -118,6 +129,7 @@ class ChemElementRegressorDataset(Dataset):
         # # print('==========fine __getitem__ in ChemElementRegressorDataset.py==========')
         return {'row': row, 'counts': value}
 
+
     def __getitem__(self, index):
         # # print('==========inizio __getitem__ in ChemElementRegressorDataset.py==========')
         if torch.is_tensor(index):
@@ -132,14 +144,14 @@ class ChemElementRegressorDataset(Dataset):
         # print('DEBUG: val', value)
         if self.pick_high:
             # value must be greater then 200.
-            if value >= 200:
+            if value >= self.threshold:
                 self.pick_high = False
             else:
                 # choose randomly between self.high count indexes
                 index = np.random.choice(self.high_count_idxs, 1)
         else:
             # value must be lower then 200.
-            if value < 200:
+            if value < self.threshold:
                 self.pick_high = True
             else:
                 # choose randomly between self.low count indexes
