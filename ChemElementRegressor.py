@@ -184,7 +184,8 @@ class ChemElementRegressor_Convbased(nn.Module):
 # define the device available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def train_regressor(model, train_set, test_set, batch_size, sampler, lr=0.003, epochs=5, momentum=0.99, model_filename='regressor.p'):
+def train_regressor(model, train_set, test_set, batch_size, sampler, lr=0.003, epochs=5, momentum=0.99, model_filename='regressor.p', output_path='data/'):
+    """ model_filename: the name of the modemust not include extension of model file. """
     # plotter
     loss_logger = VisdomPlotLogger(plot_type='line', env='element_regressor', opts={'title': model_filename, 'legend':['train','test']})
 
@@ -250,8 +251,7 @@ def train_regressor(model, train_set, test_set, batch_size, sampler, lr=0.003, e
             loss_logger.log(e+1, loss_meter.value()[0], name=mode)
 
         # save the model
-        path = './data/ChemElementRegressor/DOggionoGiulia'
-        utilities.check_existing_folder(path=path[:-1])
-        torch.save(model, path + model_filename)
+        utilities.check_existing_folder(output_path)
+        torch.save(model, output_path + model_filename + str(e) + '.p')
         visdom_saver.save()
     return model

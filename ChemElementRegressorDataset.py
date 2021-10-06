@@ -21,9 +21,9 @@ class ToTensor(object):
 
 class ChemElementRegressorDataset(Dataset):
     """ Build a custom dataset for ChemElementRegressor model """
-    def __init__(self, csv_file, data, labels, transform=ToTensor()):
+    def __init__(self, data, labels, csv_file='', transform=ToTensor()):
         # print('DEBUG: creo il dataset')
-        self.csv_file = pd.read_csv(csv_file, sep=' ')
+        # self.csv_file = pd.read_csv(csv_file, sep=' ') # obsolete!
         self.data = data
         self.labels = np.array(labels)
 
@@ -48,7 +48,7 @@ class ChemElementRegressorDataset(Dataset):
         return self.data.shape[0]
 
 
-    def __getitem__concsv(self, index):
+    """def __getitem__concsv(self, index):
         # print('\n========== inizio getitem in ChemElementRegressorDataset ==========')
         if torch.is_tensor(index):
             index = index.tolist()
@@ -127,8 +127,7 @@ class ChemElementRegressorDataset(Dataset):
         value = torch.tensor([value])
 
         # # print('==========fine __getitem__ in ChemElementRegressorDataset.py==========')
-        return {'row': row, 'counts': value}
-
+        return {'row': row, 'counts': value} """
 
     def __getitem__(self, index):
         # # print('==========inizio __getitem__ in ChemElementRegressorDataset.py==========')
