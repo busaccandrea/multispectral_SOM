@@ -10,6 +10,8 @@ from ChemElementRegressorDataset_for_evaluate import ChemElementRegressorDataset
 from glob import glob
 from os import path
 
+from utilities import check_existing_folder
+
 """ 
     This script needs a trained model!
 """
@@ -20,15 +22,24 @@ if __name__=='__main__':
     print('device available:', device)
     running_times = []
 
-    data_np = np.load('data/DOggionoGiulia/EDF/data.npy')
-    data_set = ChemElementRegressorDataset_for_evaluate(data=data_np)
-    eval_loader = DataLoader(dataset=data_set, batch_size=256, shuffle=False)
+    data_loading_time = time()
+    print('loading data...')
+    data_np = np.load('data.npy')
+    print('loaded in', time() - data_loading_time)
 
-    # elements = ['Ca-K','Cu-K','Fe-K','Hg-L','K-K','Mn-K','Pb-L','Sn-L','Sr-K','Ti-K']
-    exclude = ['Ca-K','Cu-K','Fe-K','Hg-L','K-K','Pb-L','Sn-L','Sr-K','Ti-K']
-    elements = glob('data/DOggionoGiulia/checkpoints/*.p')
+
+    print('creating dataset and loader...')
+    dataset_time = time()
+    data_set = ChemElementRegressorDataset_for_evaluate(data=data_np)
+    eval_loader = DataLoader(dataset=data_set, batch_size=1024, shuffle=False)
+    print('created in', time() - dataset_time)
+
+
+    # elements = ['Ca','Cu','Fe','Hg','K','Mn','Pb','Sn','Sr','Ti']
+    exclude = ['Ca','Cu','Fe','Hg', 'K', 'Mn', 'Pb','Sn']
+    elements = glob('data/ChemElementRegressor/*.p')
     for element in elements:
-        chemel = path.basename(element)[:4]
+        chemel = path.basename(element).split('.')[0]
         print('evaluating', chemel)
         if chemel in exclude:
             continue
@@ -38,7 +49,7 @@ if __name__=='__main__':
         model.eval()
         print('Model loaded and moved to :', device)
         
-        batch_size = 512
+        batch_size = 1024
 
         first_time = True
 
@@ -58,11 +69,12 @@ if __name__=='__main__':
         print('\n',element,'evaluated.')
 
         outputs = outputs.numpy()
-        outputs = outputs.reshape((418,418))
+        outputs = outputs.reshape((1500,1960)) #braque shape
 
-        np.save('./data/DOggionoGiulia/' + chemel + 'evaluated.npy', outputs)
+        check_existing_folder('./data/Braque/eval/')
+        np.save('./data/Braque/eval/' + chemel + '_evaluated.npy', outputs)
 
-        ground_truth = np.array(Image.open('./data/DOggionoGiulia/float32/'+ chemel + '.tif'))
+        ground_truth = np.array(Image.open('./data/Braque/labels/'+ chemel + '.tiff'))
         f1 = plt.figure(1)
         plt.imshow(ground_truth)
         f1.show()
@@ -73,7 +85,7 @@ if __name__=='__main__':
         f2.show()
         # img.save('./results/' + str(element) + '.tif')
         input()
-        print('Image saved in path:', './results/' + str(element) + '.tif')
+        print('Image saved in path:', './results/' + str(element) + '.tiff')
         
     running_times = np.array(running_times)
     for element, t in enumerate(running_times):
