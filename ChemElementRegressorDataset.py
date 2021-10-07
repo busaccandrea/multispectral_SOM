@@ -29,8 +29,8 @@ class ChemElementRegressorDataset(Dataset):
 
         x, _, _ = plt.hist(self.labels, bins=2000)
         # show histogram of labels
-        plt.gca().set(title='Frequency Histogram', ylabel='Frequency')
-        plt.show()
+        # plt.gca().set(title='Frequency Histogram', ylabel='Frequency')
+        # plt.show()
 
         self.threshold = np.argmax(x)
         print('Threshold high/low counts:', np.max(x), self.threshold, self.threshold * 0.6)

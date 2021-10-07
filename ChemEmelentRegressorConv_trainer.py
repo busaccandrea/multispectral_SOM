@@ -40,7 +40,8 @@ if __name__ == '__main__':
     #     9
     # ]
 
-    elements = ['Ca','Cu','Fe','Hg','K','Mn','Pb','Sn','Sr','Ti']
+    # elements = ['Ca','Cu','Fe','Hg','K','Mn','Pb','Sn','Sr','Ti']
+    elements = ['Cu','Fe','Hg','K','Mn','Pb','Sn','Sr','Ti']
     for i, element in enumerate(elements):
         print("Training of element:", element)
         # define which device is available.
@@ -55,8 +56,8 @@ if __name__ == '__main__':
         # csvfile = path_to_data + 'labels/' + str(element) + '.csv'
         
         # training parameters
-        epochs = 25
-        batch_size = 256
+        epochs = 10
+        batch_size = 1024
         learning_rates = [0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006, 0.006 ] # using a list to give different learning rates for each element
         
         # define dataset object
@@ -89,7 +90,7 @@ if __name__ == '__main__':
         test_sampler = BalancedRandomSampler(test_set, high_low_ratio=0.5) # pass the sampler to train method
 
         # define model
-        model_filename = path_to_data + str(element) + '.p'
+        model_filename = path_to_data + 'models' + str(element) + '.p'
         if os.path.isfile(model_filename):
             print('Model and checkpoint files found. Loading.')
             model = torch.load(model_filename)
@@ -106,5 +107,5 @@ if __name__ == '__main__':
 
         # train
         print('Training model for', epochs, 'epochs...')
-        train_regressor(model, training_set, test_set, epochs=epochs, batch_size=batch_size, lr=learning_rates[i], sampler={'training':training_sampler, 'test':test_sampler}, model_filename=str(element), output_path=path_to_data)
+        train_regressor(model, training_set, test_set, epochs=epochs, batch_size=batch_size, lr=learning_rates[i],  model_filename=str(element), output_path=path_to_data+'models/')# sampler={'training':training_sampler,'test':test_sampler},
         print('\nDone.')
