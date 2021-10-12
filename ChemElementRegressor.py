@@ -207,8 +207,8 @@ def train_regressor(model, train_set, test_set, batch_size, sampler, lr=0.003, e
     # test_set = normalize(test_set, axis=1, norm='max')
 
     # obtain loaders
-    train_dataloader = DataLoader(train_set, batch_size=batch_size, sampler=sampler['training'])
-    test_dataloader = DataLoader(test_set, batch_size=batch_size, sampler=sampler['test'])
+    train_dataloader = DataLoader(train_set, batch_size=batch_size)#, sampler=sampler['training'])
+    test_dataloader = DataLoader(test_set, batch_size=batch_size)#, sampler=sampler['test'])
     for e in range(epochs):
         for mode in ['train', 'test']:
             loss_meter.reset()
@@ -236,7 +236,7 @@ def train_regressor(model, train_set, test_set, batch_size, sampler, lr=0.003, e
                     output = model(x) # (4.)
 
                     # y = y.long() -> y.as_type(output) because otherwise RuntimeError: result type Double can't be cast to the desired output type Long will raise
-                    l = torch.sqrt(criterion(output, y.type_as(output))) # (5.)
+                    l = torch.sqrt(criterion(output, y.type_as(output))) # (5.) /y
                     if mode == 'train':
                         l.backward() # (6.)
                         optim.step()

@@ -107,5 +107,5 @@ if __name__ == '__main__':
 
         # train
         print('Training model for', epochs, 'epochs...')
-        train_regressor(model, training_set, test_set, epochs=epochs, batch_size=batch_size, lr=learning_rates[i],  model_filename=str(element), output_path=path_to_data+'models/')# sampler={'training':training_sampler,'test':test_sampler},
+        train_regressor(model, training_set, test_set, epochs=epochs, batch_size=batch_size, lr=learning_rates[i], sampler={'training':training_sampler,'test':test_sampler}, model_filename=str(element), output_path=path_to_data+'models/')
         print('\nDone.')
